@@ -1,9 +1,53 @@
 #include "client.h"
 
-struct PCDataRequest
+struct GET_PC_DATA_REQUSET
 {
-
+    std::string domain;
+    std::string machine;
+    std::string ip;
+    std::string user;
 };
+
+bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
+{
+    TCHAR  info_buf[32767];
+    DWORD  buf_char_count = 32767;
+
+    // --- Domain ---
+
+
+    // --- machine ---
+    if (!GetComputerName(info_buf, &buf_char_count))
+        return false;
+    pc_data.machine = info_buf;
+
+
+    // --- IP ---
+    IP_ADAPTER_INFO AdapterInfo[16];
+    DWORD dwBufLen = sizeof(AdapterInfo);
+
+    DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
+    if (dwStatus == ERROR_SUCCESS) {
+        PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
+        while (pAdapterInfo) {
+            std::cout << "IP Address: " << pAdapterInfo->IpAddressList.IpAddress.String << std::endl;
+            pAdapterInfo = pAdapterInfo->Next;
+        }
+    }
+    else {
+        std::cerr << "Failed to get adapter information. Error code: " << dwStatus << std::endl;
+        return 1;
+    }
+    pc_data.ip = AdapterInfo->IpAddressList.IpAddress.String;
+
+    // --- User ---
+    if (!GetUserName(info_buf, &buf_char_count))
+        return false;
+
+    pc_data.user = info_buf;
+
+    return true;
+}
 
 int main()
 {
@@ -49,7 +93,10 @@ int main()
     char buf[4096];
 
     // Getting PC Data
-    PCDataRequest pc_data;
+    GET_PC_DATA_REQUSET pc_data;
+    if (!GetDataPc(pc_data))
+        return -1;
+
 
     // sending    // CHAR
     // send(sock, pc.c_str(), pc.size() + 1, 0);
