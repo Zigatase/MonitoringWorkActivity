@@ -88,7 +88,7 @@ int main()
 				// --- COMMAND ---
 				if (buf[0] == 'C')
 				{
-					std::string message = std::string(buf).substr(3, sizeof(buf));
+					std::string message = std::string(buf).substr(2, sizeof(buf));
 					std::cout << "[Command from the client]: " << message << std::endl;
 				}
 			}

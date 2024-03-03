@@ -14,7 +14,7 @@ bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
     DWORD  buf_char_count = 32767;
 
     // --- Domain ---
-
+    pc_data.domain = "NONE";
 
     // --- machine ---
     if (!GetComputerName(info_buf, &buf_char_count))
