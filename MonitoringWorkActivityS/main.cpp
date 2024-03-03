@@ -71,7 +71,7 @@ int main()
 				std::string connectionMessage = "-Connect";
 				send(client, connectionMessage.c_str(), connectionMessage.size() + 1, 0);
 			}
-			else // It's an inbound messag
+			else // --- It's an inbound messag ---
 			{
 				char buf[4096];
 				ZeroMemory(buf, 4096);

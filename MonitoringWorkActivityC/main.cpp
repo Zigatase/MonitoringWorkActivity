@@ -56,6 +56,8 @@ int main()
     std::string message = "Test Connect";
     send(sock, message.c_str(), message.size() + 1, 0);
 
+
+    // --- Waiting for commands from the server ---
     while (true)
     {
         ZeroMemory(buf, 4095);
@@ -69,7 +71,7 @@ int main()
 
         std::string command = std::string(buf, 0, bytesReceived);
 
-        //
+        // Ñommand processing
         if (command == "-Connect")
         {
             std::cout << "[Command from the server]: " << command << std::endl;;
