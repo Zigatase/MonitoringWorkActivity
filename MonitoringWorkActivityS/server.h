@@ -8,7 +8,4 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-
-int Server();
-
 #endif // !MONITORINGWORKACTIVITYS_SERVER_H_
