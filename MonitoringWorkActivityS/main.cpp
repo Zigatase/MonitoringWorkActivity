@@ -86,9 +86,10 @@ int main()
 				}
 
 				// --- COMMAND ---
-				if (buf[0] == 'T')
+				if (buf[0] == 'C')
 				{
-					std::cout << "[Command from the client]: " << buf << std::endl;
+					std::string message = std::string(buf).substr(3, sizeof(buf));
+					std::cout << "[Command from the client]: " << message << std::endl;
 				}
 			}
 		}

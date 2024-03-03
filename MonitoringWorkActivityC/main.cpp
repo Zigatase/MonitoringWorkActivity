@@ -92,15 +92,13 @@ int main()
     // While loop to send and receive data
     char buf[4096];
 
-    // Getting PC Data
+    // --- Getting PC Data ---
     GET_PC_DATA_REQUSET pc_data;
     if (!GetDataPc(pc_data))
         return -1;
 
-
-    // sending    // CHAR
-    // send(sock, pc.c_str(), pc.size() + 1, 0);
-    std::string message = "Test Connect";
+    // Send
+    std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + "\0";
     send(sock, message.c_str(), message.size() + 1, 0);
 
 
