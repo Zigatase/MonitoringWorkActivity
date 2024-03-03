@@ -26,10 +26,18 @@ int main()
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 	server_addr.sin_port = htons(77777);
 
-	bind(server_socket, (sockaddr*)&server_addr, sizeof(server_addr));
+	if (bind(server_socket, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR)
+	{
+		std::cerr << "Bind failed";
+		return -1;
+	}
 
 	// Start listening for connections
-	listen(server_socket, 5);
+	if (listen(server_socket, 5) == SOCKET_ERROR)
+	{
+		std::cerr << "Listen failed";
+		return -1;
+	}
 
 	// Create the master file descriptor set and zero it
 	fd_set master;
