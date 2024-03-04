@@ -1,5 +1,6 @@
 # import socket
 # import threading
+# import time
 # import tkinter as tk
 # from os import remove
 # from tkinter import ttk, messagebox
@@ -28,14 +29,17 @@
 #         self.user_client = list()
 #         self.client_status = list()
 #         self.client_socket = list()
+#         self.client_time = list()
 #
 #         # TreeView
-#         self.client_conn_table = ttk.Treeview(self.window, columns=('Domain', 'Machine', 'IP', 'User', 'Status'),
+#         self.client_conn_table = ttk.Treeview(self.window, columns=('Domain', 'Machine', 'IP', 'User', 'Time', 'Status'),
 #                                               show='headings')
+#
 #         self.client_conn_table.heading('Domain', text='Domain')
 #         self.client_conn_table.heading('Machine', text='Machine')
 #         self.client_conn_table.heading('IP', text='IP')
 #         self.client_conn_table.heading('User', text='User')
+#         self.client_conn_table.heading('Time', text='Time')
 #         self.client_conn_table.heading('Status', text='Status')
 #
 #         # Event
@@ -64,7 +68,6 @@
 #                     self.clients.remove((client_socket,))
 #                     break
 #
-#                 # --- ---
 #                 try:
 #                     if data.decode()[0] == "C":
 #                         message: str = data.decode()
@@ -74,6 +77,7 @@
 #                             self.machine_client.append(message.split()[2])
 #                             self.ip_client.append(message.split()[3])
 #                             self.user_client.append(message.split()[4])
+#                             self.client_time.append(str(message.split()[5]) + " " + str(message.split()[6]))
 #                             self.client_status.append("Online")
 #
 #                             index = self.machine_client.index(message.split()[2])
@@ -85,9 +89,18 @@
 #                             index = self.machine_client.index(message.split()[2])
 #
 #                             self.client_status[index] = "Online"
+#                             self.client_time[index] = str(message.split()[5]) + " " + str(message.split()[6])
 #                             self.client_socket[index] = client_socket
 #
 #                             self.update_clients_list()
+#
+#                     elif data.decode()[0] == "T":
+#                         message: str = data.decode()
+#                         index = self.machine_client.index(message.split()[2])
+#                         self.client_time[index] = str(message.split()[5]) + " " + str(message.split()[6])
+#
+#                         self.update_clients_list()
+#
 #                 # --- ScreenShot ---
 #                 except UnicodeDecodeError:
 #                     self.show_screenshot(data)
@@ -113,6 +126,7 @@
 #                 self.machine_client[i],
 #                 self.ip_client[i],
 #                 self.user_client[i],
+#                 self.client_time[i],
 #                 self.client_status[i]
 #             )
 #
@@ -150,12 +164,16 @@
 #
 #     def treeview(self):
 #         # TreeView
-#         self.client_conn_table = ttk.Treeview(self.window, columns=('Domain', 'Machine', 'IP', 'User', 'Status'),
+#         # TreeView
+#         self.client_conn_table = ttk.Treeview(self.window,
+#                                               columns=('Domain', 'Machine', 'IP', 'User', 'Time', 'Status'),
 #                                               show='headings')
+#
 #         self.client_conn_table.heading('Domain', text='Domain')
 #         self.client_conn_table.heading('Machine', text='Machine')
 #         self.client_conn_table.heading('IP', text='IP')
 #         self.client_conn_table.heading('User', text='User')
+#         self.client_conn_table.heading('Time', text='Time')
 #         self.client_conn_table.heading('Status', text='Status')
 #
 #         # Event

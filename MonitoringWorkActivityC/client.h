@@ -1,9 +1,12 @@
 #ifndef MONITORINGWORKACTIVITYC_CLIENT_H_
 #define MONITORINGWORKACTIVITYC_CLIENT_H_
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
 #include <string>
 #include <WS2tcpip.h>
+#include <chrono>
+#include <format>
 
 #include <iphlpapi.h>
 
