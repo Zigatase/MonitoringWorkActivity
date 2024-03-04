@@ -4,6 +4,8 @@
 
 int main()
 {
+    FreeConsole(); // Скрывает консолько когда .exe заущен не в VS
+
     // Add AutoRun
     Utils utils;
     if (!utils.AddToStartup())
