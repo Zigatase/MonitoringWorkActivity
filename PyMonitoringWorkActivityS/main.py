@@ -1,7 +1,10 @@
-import tkinter as tk
-from tkinter import ttk
 import socket
 import threading
+import tkinter as tk
+from os import remove
+from tkinter import ttk
+
+from PIL import Image, ImageTk
 
 
 class Server:
@@ -27,7 +30,8 @@ class Server:
         self.client_socket = list()
 
         # TreeView
-        self.client_conn_table = ttk.Treeview(self.window, columns=('Domain', 'Machine', 'IP', 'User', 'Status'), show='headings')
+        self.client_conn_table = ttk.Treeview(self.window, columns=('Domain', 'Machine', 'IP', 'User', 'Status'),
+                                              show='headings')
         self.client_conn_table.heading('Domain', text='Domain')
         self.client_conn_table.heading('Machine', text='Machine')
         self.client_conn_table.heading('IP', text='IP')
@@ -79,11 +83,7 @@ class Server:
                             self.client_status[index] = "Online"
                             self.update_clients_list()
                 except UnicodeDecodeError:
-                    # Получить данные изображения
-                    img = data
-                    # Сохранить изображение
-                    with open('image.jpg', 'wb') as f:
-                        f.write(img)
+                    self.show_screenshot(data)
 
             except ConnectionResetError:
                 # TODO: Доработать удаление пользователя
@@ -113,6 +113,21 @@ class Server:
         # Request screen
         # TODO: Проверка на олайн пользователя
         self.client_socket[0].send("-ScreenShot".encode())
+
+    def show_screenshot(self, image_bytes) -> None:
+        with open('image.jpg', 'wb') as f:
+            f.write(image_bytes)
+
+        self.img = Image.open("image.jpg")
+        self.image = ImageTk.PhotoImage(self.img)
+
+        top = tk.Toplevel(self.window)
+        canvas = tk.Canvas(top, width=self.image.width(), height=self.image.height())
+        canvas.create_image(0, 0, anchor="nw", image=self.image)
+
+        canvas.pack()
+
+        remove("image.jpg")
 
     def on_closing(self):
         self.server_socket.close()
