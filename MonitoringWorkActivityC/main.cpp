@@ -53,11 +53,6 @@ void gdiscreen() {
         bitmap.Save(L"C:/Users/Ziglot/screen.jpeg", &clsid, NULL); // To save the jpeg to a file
         bitmap.Save(istream, &clsid, NULL);
 
-        // Create a bitmap from the stream and save it to make sure the stream has the image
-//		Gdiplus::Bitmap bmp(istream, NULL);
-//		bmp.Save(L"t1est.jpeg", &clsid, NULL);             
-        // END
-
         //delete &clsid;
         DeleteObject(memdc);
         DeleteObject(membit);
