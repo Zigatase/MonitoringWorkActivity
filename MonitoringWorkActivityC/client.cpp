@@ -40,7 +40,7 @@ bool Client::GetDataPc(GET_PC_DATA_REQUSET& pc_data)
 }
 
 
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
+int Client::GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 {
     using namespace Gdiplus;
     UINT  num = 0;
@@ -71,7 +71,7 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 }
 
 
-void gdiscreen()
+void Client::gdiscreen()
 {
     using namespace Gdiplus;
     IStream* istream;
@@ -92,7 +92,7 @@ void gdiscreen()
 
         Gdiplus::Bitmap bitmap(membit, NULL);
         CLSID clsid;
-        GetEncoderClsid(L"image/jpeg", &clsid);
+        Client::GetEncoderClsid(L"image/jpeg", &clsid);
         bitmap.Save(L"C:/Users/Public/screen.jpeg", &clsid, NULL);
         bitmap.Save(istream, &clsid, NULL);
 
@@ -105,7 +105,7 @@ void gdiscreen()
 }
 
 
-int ClientStart()
+int Client::ClientStart()
 {
     const char ip_address[] = "127.0.0.1";
     const int port = 55555;
@@ -150,7 +150,7 @@ int ClientStart()
 
     // --- Getting PC Data ---
     GET_PC_DATA_REQUSET pc_data;
-    if (!GetDataPc(pc_data))
+    if (!Client::GetDataPc(pc_data))
         return -1;
 
     // Time

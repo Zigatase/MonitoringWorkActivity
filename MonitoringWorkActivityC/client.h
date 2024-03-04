@@ -31,10 +31,13 @@ struct GET_PC_DATA_REQUSET
 
 class Client
 {
+private:
 	bool GetDataPc(GET_PC_DATA_REQUSET& pc_data);
 
 	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 	void gdiscreen();
+
+public:
 
 	int ClientStart();
 };
