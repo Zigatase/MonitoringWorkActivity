@@ -161,7 +161,7 @@ int main()
 
     // Send
     // C++ and C++ std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user + "\0";
-    std::string message = pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user;
+    std::string message = "C " + pc_data.domain + " " + pc_data.machine + " " + pc_data.ip + " " + pc_data.user;
     send(sock, message.c_str(), message.size() + 1, 0);
 
 

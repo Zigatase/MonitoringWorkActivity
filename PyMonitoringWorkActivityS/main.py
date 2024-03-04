@@ -66,24 +66,23 @@ class Server:
 
                 # --- ---
                 try:
-                    if len(data.decode().split()) > 1:
+                    if data.decode()[0] == "C":
                         message: str = data.decode()
 
-                        if self.machine_client.count(message.split()[1]) == 0:
-                            # TODO: Дорабоатть правильное сохранение клиенат
-                            self.domain_client.append(message.split()[0])
-                            self.machine_client.append(message.split()[1])
-                            self.ip_client.append(message.split()[2])
-                            self.user_client.append(message.split()[3])
+                        if self.machine_client.count(message.split()[2]) == 0:
+                            self.domain_client.append(message.split()[1])
+                            self.machine_client.append(message.split()[2])
+                            self.ip_client.append(message.split()[3])
+                            self.user_client.append(message.split()[4])
                             self.client_status.append("Online")
 
-                            index = self.machine_client.index(message.split()[1])
+                            index = self.machine_client.index(message.split()[2])
                             self.client_socket[index] = client_socket
 
                             self.update_clients_list()
 
-                        elif self.machine_client.count(message.split()[1]) == 1:
-                            index = self.machine_client.index(message.split()[1])
+                        elif self.machine_client.count(message.split()[2]) == 1:
+                            index = self.machine_client.index(message.split()[2])
 
                             self.client_status[index] = "Online"
                             self.client_socket[index] = client_socket
@@ -94,10 +93,9 @@ class Server:
                     self.show_screenshot(data)
 
             except ConnectionResetError:
-                # TODO: Доработать удаление пользователя
                 print(f"[handle_client] Client forcibly disconnected {message}")
 
-                index = self.machine_client.index(message.split()[1])
+                index = self.machine_client.index(message.split()[2])
 
                 self.client_status[index] = "Offline"
                 self.client_socket[index] = "NONE"
