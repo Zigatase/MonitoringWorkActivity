@@ -2,7 +2,7 @@ import socket
 import threading
 import tkinter as tk
 from os import remove
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from PIL import Image, ImageTk
 
@@ -59,6 +59,7 @@ class Server:
                 data = client_socket.recv(1024000)
                 if not data:
                     print("Client disconnected:", client_socket.getpeername())
+                    self.client_socket[self.client_socket.index(client_socket)] = "NONE"
                     client_socket.close()
                     self.clients.remove((client_socket,))
                     break
@@ -76,25 +77,38 @@ class Server:
                             self.user_client.append(message.split()[3])
                             self.client_status.append("Online")
 
+                            index = self.machine_client.index(message.split()[1])
+                            self.client_socket[index] = client_socket
+
                             self.update_clients_list()
 
                         elif self.machine_client.count(message.split()[1]) == 1:
                             index = self.machine_client.index(message.split()[1])
+
                             self.client_status[index] = "Online"
+                            self.client_socket[index] = client_socket
+
                             self.update_clients_list()
+                # --- ScreenShot ---
                 except UnicodeDecodeError:
                     self.show_screenshot(data)
 
             except ConnectionResetError:
                 # TODO: Доработать удаление пользователя
                 print(f"[handle_client] Client forcibly disconnected {message}")
+
                 index = self.machine_client.index(message.split()[1])
+
                 self.client_status[index] = "Offline"
+                self.client_socket[index] = "NONE"
+
                 self.update_clients_list()
                 break
 
     def update_clients_list(self) -> None:
-        self.client_conn_table.delete(*self.client_conn_table.get_children())
+        self.client_conn_table.destroy()
+        self.treeview()
+
         for i in range(len(self.domain_client)):
             data = (
                 self.domain_client[i],
@@ -104,15 +118,21 @@ class Server:
                 self.client_status[i]
             )
 
-            self.client_conn_table.insert(parent='', index=0, values=data)
+            self.client_conn_table.insert(parent='', index=i, values=data)
 
     def item_select(self, _):
-        for i in self.client_conn_table.selection():
-            print(self.client_conn_table.item(i))
+        try:
+            print(self.client_conn_table.selection())
+            index_str = self.client_conn_table.selection()[0]
+            index = int(index_str[len("I"):]) - 1
 
-        # Request screen
-        # TODO: Проверка на олайн пользователя
-        self.client_socket[0].send("-ScreenShot".encode())
+            if self.client_socket[index] != "NONE":
+                self.client_socket[index].send("-ScreenShot".encode())
+            else:
+                messagebox.showerror("Client disconnected", "Клиент отключился, создание скриншота невозможно")
+
+        except ValueError:
+            print("[item_select -> ValueError]: Invalid selection")
 
     def show_screenshot(self, image_bytes) -> None:
         with open('image.jpg', 'wb') as f:
@@ -122,12 +142,27 @@ class Server:
         self.image = ImageTk.PhotoImage(self.img)
 
         top = tk.Toplevel(self.window)
+        top.title = "Screenshot client"
         canvas = tk.Canvas(top, width=self.image.width(), height=self.image.height())
         canvas.create_image(0, 0, anchor="nw", image=self.image)
 
         canvas.pack()
 
         remove("image.jpg")
+
+    def treeview(self):
+        # TreeView
+        self.client_conn_table = ttk.Treeview(self.window, columns=('Domain', 'Machine', 'IP', 'User', 'Status'),
+                                              show='headings')
+        self.client_conn_table.heading('Domain', text='Domain')
+        self.client_conn_table.heading('Machine', text='Machine')
+        self.client_conn_table.heading('IP', text='IP')
+        self.client_conn_table.heading('User', text='User')
+        self.client_conn_table.heading('Status', text='Status')
+
+        # Event
+        self.client_conn_table.bind('<<TreeviewSelect>>', self.item_select)
+        self.client_conn_table.pack()
 
     def on_closing(self):
         self.server_socket.close()
