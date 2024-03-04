@@ -21,4 +21,22 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 
+struct GET_PC_DATA_REQUSET
+{
+	std::string domain;
+	std::string machine;
+	std::string ip;
+	std::string user;
+};
+
+class Client
+{
+	bool GetDataPc(GET_PC_DATA_REQUSET& pc_data);
+
+	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
+	void gdiscreen();
+
+	int ClientStart();
+};
+
 #endif // !MONITORINGWORKACTIVITYC_CLIENT_H_
