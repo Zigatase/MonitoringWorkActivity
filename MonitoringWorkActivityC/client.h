@@ -10,7 +10,6 @@
 #include <fstream>
 
 #include <stdio.h>
-#include <windows.h>
 #include <gdiplus.h>
 #include <time.h>
 #include <cstdio>

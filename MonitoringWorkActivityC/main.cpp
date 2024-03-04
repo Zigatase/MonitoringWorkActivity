@@ -203,8 +203,6 @@ int main()
             int sendResult = send(sock, data, file_size, 0);
             if (sendResult == SOCKET_ERROR)
                 std::cout << "Ошибка отправки данных" << std::endl;
-
-            remove("C:/Users/Ziglot/screen.jpeg");
         }
         else
         {
