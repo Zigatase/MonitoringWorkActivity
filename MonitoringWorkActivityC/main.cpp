@@ -4,7 +4,7 @@
 
 int main()
 {
-    FreeConsole(); // Скрывает консолько когда .exe заущен не в VS
+    FreeConsole(); // Скрывает консолько когда .exe запущен не в VS
 
     // Add AutoRun
     Utils utils;
