@@ -78,7 +78,11 @@ bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
     DWORD  buf_char_count = 32767;
 
     // --- Domain ---
-    pc_data.domain = "NONE";
+    IP_ADAPTER_INFO AdapterInfo[16];
+    DWORD dwBufLen = sizeof(AdapterInfo);
+    DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
+
+    pc_data.domain = AdapterInfo->IpAddressList.IpAddress.String;
 
     // --- machine ---
     if (!GetComputerName(info_buf, &buf_char_count))
@@ -87,13 +91,10 @@ bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
 
 
     // --- IP ---
-    IP_ADAPTER_INFO AdapterInfo[16];
-    DWORD dwBufLen = sizeof(AdapterInfo);
-
-    DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
     if (dwStatus == ERROR_SUCCESS) {
         PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
         while (pAdapterInfo) {
+            pc_data.ip = pAdapterInfo->IpAddressList.IpAddress.String;
             std::cout << "IP Address: " << pAdapterInfo->IpAddressList.IpAddress.String << std::endl;
             pAdapterInfo = pAdapterInfo->Next;
         }
@@ -102,7 +103,6 @@ bool GetDataPc(GET_PC_DATA_REQUSET &pc_data)
         std::cerr << "Failed to get adapter information. Error code: " << dwStatus << std::endl;
         return 1;
     }
-    pc_data.ip = AdapterInfo->IpAddressList.IpAddress.String;
 
     // --- User ---
     if (!GetUserName(info_buf, &buf_char_count))
