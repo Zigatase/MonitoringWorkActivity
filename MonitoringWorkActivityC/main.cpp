@@ -127,10 +127,10 @@ int main()
         }
         else if (command == "-ScreenShot")
         {
-            send(sock, "-ScreenShot", strlen("-ScreenShot") + 1, 0);
+            //send(sock, "-ScreenShot", strlen("-ScreenShot") + 1, 0);
 
             //C:\Users\Ziglot\Pictures
-            std::ifstream infile("C:\\Users\\Ziglot\\Pictures\\test.png", std::ios::binary);
+            std::ifstream infile("C:\\Users\\Ziglot\\Pictures\\test2.png", std::ios::binary);
             infile.seekg(0, std::ios::end);
             size_t file_size = infile.tellg();
             char* data = new char[file_size];
