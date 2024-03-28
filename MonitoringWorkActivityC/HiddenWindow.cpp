@@ -38,7 +38,7 @@ void main()
 {
     HDESK original_desktop, hidden_desktop;
     
-    hidden_desktop = CreateHiddenDesktop("MalwareTech_Hidden");
+    hidden_desktop = CreateHiddenDesktop("hVNC");
     original_desktop = GetThreadDesktop(GetCurrentThreadId());
 
     printf("Entering hidden desktop\n");
