@@ -60,3 +60,60 @@ Python -> 12
 #include <windows.h>
 #include <fstream>
 
+void DisplayImageFromByteArray(const std::vector<BYTE>& imageData)
+{
+    // Создать окно
+    WNDCLASSEX wc;
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = DefWindowProc;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hInstance = GetModuleHandle(NULL);
+    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = "ImageWindow";
+    RegisterClassEx(&wc);
+
+    HWND hwnd = CreateWindowEx(0, "ImageWindow", "Image", WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL, NULL, GetModuleHandle(NULL), NULL);
+
+    // Создать контекст рисования
+    HDC hdc = GetDC(hwnd);
+
+    // Создать битмап из массива байтов
+    BITMAPINFO bmi;
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = 0;
+    bmi.bmiHeader.biHeight = 0;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biSizeImage = 0;
+    bmi.bmiHeader.biXPelsPerMeter = 0;
+    bmi.bmiHeader.biYPelsPerMeter = 0;
+    bmi.bmiHeader.biClrUsed = 0;
+    bmi.bmiHeader.biClrImportant = 0;
+
+    void* pBits;
+    HBITMAP hBitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pBits, NULL, 0);
+
+    // Скопировать данные изображения в битмап
+    memcpy(pBits, imageData.data(), imageData.size());
+
+    // Отобразить битмап в окне
+    RECT rect;
+    GetClientRect(hwnd, &rect);
+    HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
+    FillRect(hdc, &rect, hBrush);
+    DeleteObject(hBrush);
+    StretchBlt(hdc, 0, 0, rect.right, rect.bottom, hdc, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, SRCCOPY);
+
+    // Освободить ресурсы
+    DeleteObject(hBitmap);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+}
