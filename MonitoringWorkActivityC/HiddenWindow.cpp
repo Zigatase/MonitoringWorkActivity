@@ -64,3 +64,57 @@ void main()
     CloseHandle(hidden_desktop);
     getchar();
 }
+
+
+bool TakeScreenshot(HWND hDesktop, const wstring& filename) {
+    // Получение размеров рабочего стола
+    RECT rect;
+    GetWindowRect(hDesktop, &rect);
+
+    // Создание контекста устройства для рабочего стола
+    HDC hdcDesktop = GetDCEx(hDesktop, NULL, DCX_WINDOW);
+    if (hdcDesktop == NULL) {
+        cout << "Ошибка получения контекста устройства!" << endl;
+        return false;
+    }
+
+    // Создание совместимого контекста устройства
+    HDC hdcMem = CreateCompatibleDC(hdcDesktop);
+    if (hdcMem == NULL) {
+        cout << "Ошибка создания совместимого контекста устройства!" << endl;
+        return false;
+    }
+
+    // Создание битмапа
+    HBITMAP hBitmap = CreateDIBSection(hdcDesktop, (BITMAPINFO*)&BITMAPINFO{ sizeof(BITMAPINFOHEADER), rect.right - rect.left, rect.bottom - rect.top, 1, 32, BI_RGB, 0 }, DIB_RGB_COLORS, NULL, NULL, 0);
+    if (hBitmap == NULL) {
+        cout << "Ошибка создания битмапа!" << endl;
+        return false;
+    }
+
+    // Выбор битмапа в контекст устройства
+    SelectObject(hdcMem, hBitmap);
+
+    // Копирование изображения рабочего стола в битмап
+    BitBlt(hdcMem, 0, 0, rect.right - rect.left, rect.bottom - rect.top, hdcDesktop, 0, 0, SRCCOPY);
+
+    // Сохранение битмапа в JPEG-файл
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    CLSID encoderClsid;
+    GetEncoderClsid(L"image/jpeg", &encoderClsid);
+
+    Gdiplus::Bitmap bitmap(hBitmap);
+    bitmap.Save(filename.c_str(), &encoderClsid, NULL);
+
+    GdiplusShutdown(gdiplusToken);
+
+    // Освобождение ресурсов
+    DeleteObject(hBitmap);
+    DeleteDC(hdcMem);
+    DeleteDC(hdcDesktop);
+
+    return true;
+}
